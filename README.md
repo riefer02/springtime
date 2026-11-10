@@ -868,8 +868,6 @@ yet load the retail seed or exercise the ledger against live BigQuery; run `make
   [ADR 0002](docs/adr/0002-auth-traffic-pagination-limits.md),
   [ADR 0003](docs/adr/0003-api-contract-versioning-error-protocol.md), and
   [ADR 0004](docs/adr/0004-bigquery-gateway-and-schema-source.md).
-- `docs/reviews/2026-11-09-initial-review.md` records the initial review, what was fixed, and the
-  remaining backlog.
 
 ## Production notes
 

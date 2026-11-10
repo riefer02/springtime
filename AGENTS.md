@@ -1,8 +1,8 @@
 # AGENTS.md
 
-Canonical agent instructions for this repository. Tools that read `AGENTS.md` (Codex, OpenCode,
-Claude Code, Cursor, Copilot) should use this file. Do not duplicate it in tool-specific files; add
-an adapter only if a tool cannot read this file, and make the adapter a pointer.
+Canonical agent instructions for this repository. Agent tools that read `AGENTS.md` should use this
+file directly. Do not duplicate it in tool-specific files; add an adapter only if a tool cannot read
+this file, and make the adapter a pointer.
 
 ## Read first
 
