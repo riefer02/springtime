@@ -21,7 +21,7 @@
     <java.version>21</java.version>
     <google-cloud-bigquery.version>2.76.0</google-cloud-bigquery.version>
     <google-cloud-pubsub.version>1.160.0</google-cloud-pubsub.version>
-    <postgres-socket-factory.version>1.24.0</postgres-socket-factory.version>
+    <postgres-socket-factory.version>1.30.2</postgres-socket-factory.version>
     <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
     <openapi.write>false</openapi.write>
   </properties>
