@@ -1,0 +1,204 @@
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+  forward-headers-strategy: framework
+  compression:
+    enabled: true
+    mime-types: application/json,application/problem+json
+
+spring:
+  application:
+    name: springtime
+  lifecycle:
+    timeout-per-shutdown-phase: 45s
+  threads:
+    virtual:
+      enabled: true
+  task:
+    scheduling:
+      pool:
+        size: 4
+  mvc:
+    problemdetails:
+      enabled: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/springtime}
+    username: ${DATABASE_USERNAME:springtime}
+    password: ${DATABASE_PASSWORD:springtime}
+    hikari:
+      maximum-pool-size: ${DB_MAX_POOL_SIZE:10}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:5000}
+      validation-timeout: ${DB_VALIDATION_TIMEOUT_MS:2000}
+      idle-timeout: ${DB_IDLE_TIMEOUT_MS:600000}
+      max-lifetime: ${DB_MAX_LIFETIME_MS:1800000}
+      data-source-properties:
+        socketTimeout: ${DB_SOCKET_TIMEOUT_SECONDS:30}
+        connectTimeout: ${DB_CONNECT_TIMEOUT_SECONDS:5}
+  flyway:
+    enabled: ${FLYWAY_ENABLED:false}
+    locations: classpath:db/migration
+
+control:
+  supplier:
+    gateway: ${SUPPLIER_GATEWAY:}
+    outbox:
+      enabled: ${SUPPLIER_OUTBOX_ENABLED:true}
+      worker-enabled: ${SUPPLIER_OUTBOX_WORKER_ENABLED:true}
+      poll-interval-ms: ${SUPPLIER_OUTBOX_POLL_INTERVAL_MS:5000}
+      batch-size: ${SUPPLIER_OUTBOX_BATCH_SIZE:20}
+      max-attempts: ${SUPPLIER_OUTBOX_MAX_ATTEMPTS:8}
+      initial-delay: ${SUPPLIER_OUTBOX_INITIAL_DELAY:1s}
+      multiplier: ${SUPPLIER_OUTBOX_MULTIPLIER:2.0}
+      max-delay: ${SUPPLIER_OUTBOX_MAX_DELAY:5m}
+      jitter: ${SUPPLIER_OUTBOX_JITTER:0.2}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+      group:
+        liveness:
+          include: livenessState
+          show-details: never
+        readiness:
+          include: readinessState,db,bigquery
+          show-details: never
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  info:
+    env:
+      enabled: true
+  # TRACING_ENABLED=false disables tracing instrumentation and OTLP export. Leaving it true is
+  # safe without a collector: export is asynchronous and startup never waits for one.
+  tracing:
+    enabled: ${TRACING_ENABLED:true}
+    export:
+      enabled: ${TRACING_ENABLED:true}
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
+    baggage:
+      correlation:
+        enabled: true
+  # Boot 3 used management.otlp.tracing.endpoint; Boot 4 moved it here. The standard
+  # OTEL_EXPORTER_OTLP_ENDPOINT name still points at an OTLP/HTTP collector.
+  opentelemetry:
+    enabled: ${TRACING_ENABLED:true}
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+  # Logs stay on stdout as JSON; do not duplicate them through the OTLP log exporter.
+  logging:
+    export:
+      otlp:
+        enabled: false
+
+info:
+  app:
+    name: ${spring.application.name}
+    description: Spring Boot REST API over Google BigQuery
+
+bigquery:
+  project-id: ${GOOGLE_CLOUD_PROJECT:}
+  location: ${BIGQUERY_LOCATION:US}
+  default-dataset: ${BIGQUERY_DEFAULT_DATASET:}
+  max-bytes-billed: ${BIGQUERY_MAX_BYTES_BILLED:1073741824}
+  max-results: ${BIGQUERY_MAX_RESULTS:1000}
+  use-query-cache: ${BIGQUERY_USE_QUERY_CACHE:true}
+  read-only: ${BIGQUERY_READ_ONLY:true}
+  max-concurrent-queries: ${BIGQUERY_MAX_CONCURRENT_QUERIES:8}
+  acquire-timeout: ${BIGQUERY_ACQUIRE_TIMEOUT:2s}
+  query-timeout: ${BIGQUERY_QUERY_TIMEOUT:60s}
+  writer:
+    max-bytes-billed: ${BIGQUERY_WRITER_MAX_BYTES_BILLED:1073741824}
+    max-concurrent-queries: ${BIGQUERY_WRITER_MAX_CONCURRENT_QUERIES:4}
+    acquire-timeout: ${BIGQUERY_WRITER_ACQUIRE_TIMEOUT:2s}
+
+app:
+  security:
+    api-key: ${API_KEY:}
+    api-key-previous: ${API_KEY_PREVIOUS:}
+    admin-api-key: ${ADMIN_API_KEY:}
+    allow-insecure-oidc: ${ALLOW_INSECURE_OIDC:false}
+    oidc-roles-claim: ${OIDC_ROLES_CLAIM:roles}
+    oidc-allowed-domains: ${OIDC_ALLOWED_DOMAINS:}
+    oidc-allowed-subjects: ${OIDC_ALLOWED_SUBJECTS:}
+    allow-api-key-in-production: ${ALLOW_API_KEY_IN_PRODUCTION:false}
+  http:
+    max-request-bytes: ${MAX_REQUEST_BYTES:262144}
+    max-sql-length: ${MAX_SQL_LENGTH:100000}
+    max-parameter-value-length: ${MAX_PARAMETER_VALUE_LENGTH:65536}
+    max-parameters: ${MAX_PARAMETERS:100}
+    max-response-bytes: ${MAX_RESPONSE_BYTES:5000000}
+    access-log-enabled: ${ACCESS_LOG_ENABLED:true}
+  pagination:
+    default-page-size: ${PAGE_DEFAULT_SIZE:100}
+    max-page-size: ${PAGE_MAX_SIZE:1000}
+
+retail:
+  dataset: ${RETAIL_DATASET:retail_demo}
+  default-page-size: ${RETAIL_DEFAULT_PAGE_SIZE:50}
+  max-page-size: ${RETAIL_MAX_PAGE_SIZE:200}
+  demand-window-days: ${RETAIL_DEMAND_WINDOW_DAYS:28}
+  target-cover-days: ${RETAIL_TARGET_COVER_DAYS:14}
+  max-bytes-billed: ${RETAIL_MAX_BYTES_BILLED:268435456}
+  currency: ${RETAIL_CURRENCY:USD}
+  event-max-future-skew: ${RETAIL_EVENT_MAX_FUTURE_SKEW:5m}
+  event-max-age: ${RETAIL_EVENT_MAX_AGE:365d}
+  reconciliation-tolerance: ${RETAIL_RECONCILIATION_TOLERANCE:0}
+  business-zone: ${RETAIL_BUSINESS_ZONE:UTC}
+  ledger:
+    batch:
+      enabled: ${RETAIL_LEDGER_BATCH_ENABLED:true}
+      size: ${RETAIL_LEDGER_BATCH_SIZE:100}
+      linger-ms: ${RETAIL_LEDGER_BATCH_LINGER_MS:25}
+      max-pending: ${RETAIL_LEDGER_BATCH_MAX_PENDING:2000}
+      max-pending-bytes: ${RETAIL_LEDGER_BATCH_MAX_PENDING_BYTES:33554432}
+      wait-timeout: ${RETAIL_LEDGER_BATCH_WAIT_TIMEOUT:75s}
+  projection:
+    enabled: ${RETAIL_PROJECTION_ENABLED:false}
+    interval-ms: ${RETAIL_PROJECTION_INTERVAL_MS:900000}
+    lookback-days: ${RETAIL_PROJECTION_LOOKBACK_DAYS:7}
+
+messaging:
+  pubsub-enabled: ${MESSAGING_PUBSUB_ENABLED:false}
+  events-topic: ${MESSAGING_EVENTS_TOPIC:retail-events}
+  dead-letter-topic: ${MESSAGING_DLQ_TOPIC:retail-events-dlq}
+  subscription: ${MESSAGING_SUBSCRIPTION:retail-events-worker}
+  consumer-enabled: ${MESSAGING_CONSUMER_ENABLED:true}
+  local-consumer-enabled: ${MESSAGING_LOCAL_CONSUMER_ENABLED:true}
+  local-consumer-poll-interval-ms: ${MESSAGING_LOCAL_CONSUMER_POLL_INTERVAL_MS:500}
+  max-in-memory-messages: ${MESSAGING_MAX_IN_MEMORY_MESSAGES:1000}
+  retry:
+    max-attempts: ${MESSAGING_RETRY_MAX_ATTEMPTS:5}
+    initial-delay: ${MESSAGING_RETRY_INITIAL_DELAY:200ms}
+    multiplier: ${MESSAGING_RETRY_MULTIPLIER:2.0}
+    max-delay: ${MESSAGING_RETRY_MAX_DELAY:10s}
+    jitter: ${MESSAGING_RETRY_JITTER:0.2}
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:false}
+    version: OPENAPI_3_1
+  paths-to-match: /api/**
+  writer-with-order-by-keys: true
+  writer-with-default-pretty-printer: true
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:false}
+
+logging:
+  level:
+    root: INFO
+    com.springtime: INFO

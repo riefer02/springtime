@@ -1,0 +1,75 @@
+// Grafana Alloy: tail Docker container logs and push JSON lines to Loki.
+// The application logs one JSON object per line with traceId/spanId, so Loki can link a log line
+// to the trace in Tempo.
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  // Only ship this Compose project; other local containers would pollute Loki and can carry
+  // timestamps outside the retention window.
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    regex         = "springtime"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_log_stream"]
+    target_label  = "stream"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+}
+
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  labels     = { job = "springtime" }
+  forward_to = [loki.process.json.receiver]
+}
+
+loki.process "json" {
+  stage.json {
+    expressions = {
+      level   = "level",
+      logger  = "logger",
+      traceId = "traceId",
+      spanId  = "spanId",
+      message = "message",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level  = "",
+      logger = "",
+    }
+  }
+
+  stage.structured_metadata {
+    values = {
+      traceId = "traceId",
+      spanId  = "spanId",
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

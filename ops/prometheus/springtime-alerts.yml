@@ -1,0 +1,157 @@
+groups:
+  - name: springtime-availability
+    rules:
+      - alert: SpringtimeHttp5xxRatio
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(http_server_requests_seconds_count[5m])), 0.001)
+          ) > 0.01
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx ratio above 1% for 10 minutes"
+          description: "Find the failing dependency with requestId/traceId in JSON logs, then check BigQuery, Postgres, and broker health."
+          runbook: "docs/operations/README.md#failure-modes"
+
+      - alert: SpringtimeReadinessDown
+        expr: up{job="springtime"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance is not being scraped"
+          description: "Check the container, readiness probe, ADC, and BigQuery dry-run health indicator."
+          runbook: "docs/operations/README.md#failure-modes"
+
+  - name: springtime-events
+    rules:
+      - alert: SpringtimeDeadLetters
+        expr: increase(retail_events_dead_lettered_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "New retail dead letters in the last 10 minutes"
+          description: "List dead letters, inspect reason/errorType, fix the cause, then replay (admin)."
+          runbook: "docs/operations/README.md#dead-letter-growth"
+
+      - alert: SpringtimeRetryExhaustion
+        expr: increase(retail_events_retry_exhausted_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Consumer retry budget exhausted repeatedly"
+          description: "Retryable failures outlived the in-process budget and were nacked. Check BigQuery/ledger latency and sink failures."
+          runbook: "docs/operations/README.md#failure-modes"
+
+      - alert: SpringtimeSinkFailures
+        expr: |
+          sum(rate(retail_events_sink_failures_total{retryable="true"}[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Sustained retryable ledger sink failures"
+          description: "Inspect BigQuery error codes and slot saturation before changing limits."
+          runbook: "docs/operations/README.md#bigquery-quota-or-slots"
+
+  - name: springtime-ledger
+    rules:
+      - alert: SpringtimeBatchQueueSaturation
+        expr: retail_inventory_movement_batch_pending > 1500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ledger batch queue above 75% of its default bound"
+          description: "Check consumer throughput and heap; scale out before the queue fails closed."
+          runbook: "docs/operations/README.md#capacity-and-tuning"
+
+      - alert: SpringtimeBatchRejections
+        expr: increase(retail_inventory_movement_batch_rejected_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ledger batch queue rejected work (LEDGER_OVERLOAD)"
+          description: "Callers receive a retryable overload error; reduce intake or scale consumers immediately."
+          runbook: "docs/operations/README.md#capacity-and-tuning"
+
+      - alert: SpringtimeBatchFallbackStorm
+        expr: increase(retail_inventory_movement_batch_fallback_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Frequent per-row fallbacks from the batch sink"
+          description: "A deterministic row failure is splitting batches into single writes. Find the poison payload."
+          runbook: "docs/operations/README.md#dead-letter-growth"
+
+      - alert: SpringtimeProjectionStale
+        expr: |
+          retail_inventory_projection_last_success_timestamp_seconds > 0
+          and
+          (time() - retail_inventory_projection_last_success_timestamp_seconds) > 1800
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "On-hand projection has not refreshed for 30 minutes"
+          description: "Check the projection scheduler, lease, and BigQuery jobs; trigger an incremental refresh after fixing."
+          runbook: "docs/operations/README.md#stale-projection"
+
+      - alert: SpringtimeProjectionNeverSucceeded
+        expr: retail_inventory_projection_last_success_timestamp_seconds == 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No successful projection refresh has been recorded"
+          description: "Confirm the projection is enabled on a worker and that the schema/seed exists."
+          runbook: "docs/operations/README.md#stale-projection"
+
+      - alert: SpringtimeReconciliationDrift
+        expr: increase(retail_inventory_reconciliation_drift_pairs_total[1h]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ledger-to-snapshot drift detected"
+          description: "Inspect the drift report; correct with a reversing movement, never an in-place update."
+          runbook: "docs/operations/README.md#reconciliation-drift"
+
+  - name: springtime-workflows
+    rules:
+      - alert: SpringtimeReplenishmentRunFailures
+        expr: increase(retail_replenishment_runs_total{status="failed"}[15m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "A replenishment run failed"
+          description: "Read the run errorMessage; check BigQuery jobs and the run lease."
+          runbook: "docs/operations/README.md#failure-modes"
+
+      - alert: SpringtimeSupplierFailures
+        expr: increase(retail_supplier_transmissions_total{event="failed"}[15m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "A supplier transmission reached FAILED"
+          description: "Inspect sanitized lastError, fix the adapter/reference, then retry explicitly."
+          runbook: "docs/operations/README.md#supplier-transmissions-stuck-or-failed"
+
+      - alert: SpringtimePurchaseOrderFailures
+        expr: increase(retail_purchase_orders_total{event="failed"}[15m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Purchase-order workflow reported failures"
+          description: "Check Postgres availability, the outbox transaction, and constraint conflicts."
+          runbook: "docs/operations/README.md#failure-modes"

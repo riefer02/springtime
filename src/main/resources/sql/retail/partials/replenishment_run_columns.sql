@@ -1,0 +1,13 @@
+run_id,
+  store_id,
+  CAST(as_of_date AS STRING) AS as_of_date,
+  status,
+  demand_window_days,
+  target_cover_days,
+  requested_by,
+  FORMAT_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', created_at) AS created_at,
+  FORMAT_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', started_at) AS started_at,
+  FORMAT_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', completed_at) AS completed_at,
+  proposal_count,
+  CAST(total_order_value AS STRING) AS total_order_value,
+  error_message

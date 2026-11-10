@@ -1,0 +1,32 @@
+# Prometheus scrape proxy. The application protects /actuator/** with the API key, so the proxy
+# injects it and Prometheus scrapes the proxy over the Compose network.
+#
+# nginx resolves the `api` service through Docker DNS; the variable form makes it re-resolve after
+# an API container restart instead of pinning the first IP.
+server {
+    listen 9100;
+    server_name _;
+
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $backend api:8080;
+
+    location = /actuator/prometheus {
+        proxy_pass http://$backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-API-Key "${API_KEY}";
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 2s;
+        proxy_read_timeout 10s;
+    }
+
+    location = /healthz {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        return 404;
+    }
+}

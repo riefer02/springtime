@@ -1,0 +1,22 @@
+spring:
+  flyway:
+    enabled: false
+  datasource:
+    hikari:
+      # Full-context tests do not exercise the control plane; do not fail startup on a missing DB.
+      initialization-fail-timeout: -1
+
+messaging:
+  local-consumer-enabled: false
+
+management:
+  tracing:
+    export:
+      enabled: false
+
+control:
+  supplier:
+    gateway: local
+    outbox:
+      enabled: false
+      worker-enabled: false

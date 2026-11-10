@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+      Structured JSON logs. One JSON object per line keeps Docker/local output readable while
+      making the stream machine-parseable. The encoder includes only the correlation fields the
+      application explicitly sets, so tokens and request bodies never leak through MDC.
+    -->
+    <springProperty scope="context" name="serviceName"
+                    source="spring.application.name" defaultValue="springtime"/>
+    <property name="LOG_ASYNC_QUEUE_SIZE" value="${LOG_ASYNC_QUEUE_SIZE:-1024}"/>
+
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <timeZone>UTC</timeZone>
+                    <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSXXX</pattern>
+                </timestamp>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+                <threadName>
+                    <fieldName>thread</fieldName>
+                </threadName>
+                <message/>
+                <mdc>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>clientId</includeMdcKeyName>
+                    <includeMdcKeyName>jobId</includeMdcKeyName>
+                    <includeMdcKeyName>traceId</includeMdcKeyName>
+                    <includeMdcKeyName>spanId</includeMdcKeyName>
+                </mdc>
+                <stackTrace>
+                    <fieldName>stackTrace</fieldName>
+                </stackTrace>
+                <pattern>
+                    <pattern>{"service":"${serviceName}"}</pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!--
+      Bounded async queue. neverBlock=false means a full queue applies backpressure instead of
+      silently dropping errors; discardingThreshold=0 disables pre-emptive INFO/DEBUG discards.
+      Startup failures therefore always reach the console once the JVM is alive.
+    -->
+    <appender name="ASYNC_JSON_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="JSON_CONSOLE"/>
+        <queueSize>${LOG_ASYNC_QUEUE_SIZE}</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>false</neverBlock>
+        <includeCallerData>false</includeCallerData>
+        <maxFlushTime>5000</maxFlushTime>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="ASYNC_JSON_CONSOLE"/>
+    </root>
+</configuration>

@@ -1,0 +1,27 @@
+.DS_Store
+*.log
+*.tmp
+
+# Build output
+target/
+
+# Local configuration and credentials
+.local/
+.env
+.env.local
+secrets/
+*.pem
+*.p12
+*.pfx
+*key.json
+application_default_credentials.json
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project

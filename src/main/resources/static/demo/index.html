@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Springtime retail copilot — read-only demo console">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+  <title>Springtime — Retail Copilot</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Ctext x='32' y='44' font-family='Arial' font-size='34' font-weight='700' text-anchor='middle' fill='white'%3ES%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="brand">
+    <div class="mark" aria-hidden="true">S</div>
+    <div class="brand-copy">
+      <h1>Springtime <span class="readonly-pill">read-only</span></h1>
+      <p>Retail inventory &amp; replenishment copilot</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <span id="connection" class="connection" title="API connection" aria-live="polite">
+      <span class="dot"></span><span id="connection-label">Not connected</span>
+    </span>
+    <button id="refresh" class="button ghost" type="button" disabled>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3a7 7 0 0 1 6.7 5h-2.1A5 5 0 1 0 15 10h2a7 7 0 1 1-7-7v2.2A2.8 2.8 0 0 0 10 3Z" fill="currentColor"/><path d="M17 3v5h-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      Refresh
+    </button>
+    <button id="key-toggle" class="button" type="button">API key</button>
+  </div>
+</header>
+
+<main class="shell">
+  <section class="store-bar">
+    <div class="store-main">
+      <div class="field">
+        <label for="store-select">Store</label>
+        <select id="store-select" disabled><option>Loading…</option></select>
+      </div>
+      <div id="store-meta" class="store-meta"></div>
+    </div>
+    <div class="store-context">
+      <span id="as-of" class="pill">As of —</span>
+      <span id="last-updated" class="muted small" aria-live="polite">Not loaded</span>
+    </div>
+  </section>
+
+  <div id="error" class="banner error" role="alert" hidden></div>
+
+  <section id="welcome" class="card welcome" hidden>
+    <div class="welcome-art" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><rect x="6" y="14" width="36" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 14V9a10 10 0 0 1 20 0v5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="24" cy="27" r="4" fill="currentColor"/></svg>
+    </div>
+    <div>
+      <h2>Connect with the read-only key</h2>
+      <p class="muted">The console uses the same authenticated API as every other client. Writes are not offered here.</p>
+    </div>
+    <button id="welcome-key" class="button" type="button">Enter API key</button>
+  </section>
+
+  <div id="dashboard" hidden>
+    <section class="kpis" aria-label="Store KPIs">
+      <article class="kpi">
+        <div class="kpi-icon teal"><svg viewBox="0 0 20 20"><path d="M3 5h14v10H3z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 5V3h6v2M3 9h14" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div><span>On-hand units</span><strong id="kpi-onhand">—</strong></div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-icon amber"><svg viewBox="0 0 20 20"><path d="M10 3 2.5 16h15L10 3Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 8v3.5M10 13.5v.5" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div><span>Low-stock SKUs</span><strong id="kpi-lowstock">—</strong></div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-icon red"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div><span>Stockout SKUs</span><strong id="kpi-stockout">—</strong></div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-icon blue"><svg viewBox="0 0 20 20"><path d="M3 15V9M8 15V5M13 15v-4M18 15h-1" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div><span>28-day net sales</span><strong id="kpi-sales">—</strong></div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-icon violet"><svg viewBox="0 0 20 20"><path d="M2 6h11v9H2zM13 9h3l2 3v3h-5z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="15" r="1.5" fill="currentColor"/><circle cx="15" cy="15" r="1.5" fill="currentColor"/></svg></div>
+        <div><span>Open late shipments</span><strong id="kpi-late">—</strong></div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-icon green"><svg viewBox="0 0 20 20"><path d="M3 8l7-5 7 5v8H3z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 16v-4h4v4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div><span>Active promotions</span><strong id="kpi-promos">—</strong></div>
+      </article>
+    </section>
+
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button id="tabbtn-overview" class="tab active" data-tab="overview" role="tab" aria-selected="true" aria-controls="tab-overview" tabindex="0">Overview</button>
+      <button id="tabbtn-inventory" class="tab" data-tab="inventory" role="tab" aria-selected="false" aria-controls="tab-inventory" tabindex="-1">Inventory <span id="tab-inventory-count" class="tab-count"></span></button>
+      <button id="tabbtn-replenishment" class="tab" data-tab="replenishment" role="tab" aria-selected="false" aria-controls="tab-replenishment" tabindex="-1">Replenishment <span id="tab-replenishment-count" class="tab-count"></span></button>
+      <button id="tabbtn-decisions" class="tab" data-tab="decisions" role="tab" aria-selected="false" aria-controls="tab-decisions" tabindex="-1">Decisions</button>
+    </nav>
+
+    <section id="tab-overview" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-overview">
+      <div class="grid-2">
+        <article class="card">
+          <div class="card-head"><div><h2>Risk mix</h2><p class="muted small" id="risk-meta"></p></div></div>
+          <div id="risk-bars" class="risk-bars"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div><h2>Priority actions</h2><p class="muted small">Lowest cover first</p></div></div>
+          <div id="priority-list" class="priority-list"></div>
+        </article>
+      </div>
+      <article class="card">
+        <div class="card-head"><div><h2>Recent runs</h2><p class="muted small">Durable replenishment decisions</p></div></div>
+        <div class="table-wrap short"><table>
+          <thead><tr><th>Run</th><th>Status</th><th class="num">Proposals</th><th class="num">Value</th></tr></thead>
+          <tbody id="overview-runs"></tbody>
+        </table></div>
+      </article>
+    </section>
+
+    <section id="tab-inventory" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-inventory" hidden>
+      <article class="card">
+        <div class="card-head">
+          <div><h2>Inventory risk</h2><p class="muted small" id="inventory-meta"></p></div>
+          <div class="toolbar">
+            <label class="search"><svg viewBox="0 0 20 20"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m13.5 13.5 3 3" stroke="currentColor" stroke-width="1.6"/></svg><input id="inventory-search" type="search" placeholder="Search SKU, product, category" aria-label="Search inventory"></label>
+            <div class="segmented" role="group" aria-label="Risk filter">
+              <button data-risk="" class="active" type="button" aria-pressed="true">All</button>
+              <button data-risk="STOCKOUT" type="button" aria-pressed="false">Stockout</button>
+              <button data-risk="CRITICAL" type="button" aria-pressed="false">Critical</button>
+              <button data-risk="WATCH" type="button" aria-pressed="false">Watch</button>
+              <button data-risk="NO_DEMAND" type="button" aria-pressed="false">No demand</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th data-sort="sku">SKU <span class="sort"></span></th>
+            <th data-sort="productName">Product <span class="sort"></span></th>
+            <th data-sort="onHandUnits" class="num">On hand <span class="sort"></span></th>
+            <th data-sort="availableUnits" class="num">Available <span class="sort"></span></th>
+            <th data-sort="daysOfSupply" class="num">Days cover <span class="sort"></span></th>
+            <th data-sort="riskLevel">Risk <span class="sort"></span></th>
+          </tr></thead>
+          <tbody id="inventory-body"></tbody>
+        </table></div>
+      </article>
+    </section>
+
+    <section id="tab-replenishment" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-replenishment" hidden>
+      <article class="card">
+        <div class="card-head">
+          <div><h2>Replenishment recommendations</h2><p class="muted small" id="replenishment-meta"></p></div>
+          <div class="toolbar">
+            <label class="search"><svg viewBox="0 0 20 20"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m13.5 13.5 3 3" stroke="currentColor" stroke-width="1.6"/></svg><input id="replenishment-search" type="search" placeholder="Search product or supplier" aria-label="Search replenishment"></label>
+            <div class="stat-inline"><span class="muted small">Total order value</span><strong id="replenishment-total">—</strong></div>
+          </div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th data-sort="productName">Product <span class="sort"></span></th>
+            <th data-sort="supplierName">Supplier <span class="sort"></span></th>
+            <th data-sort="recommendedUnits" class="num">Recommended <span class="sort"></span></th>
+            <th data-sort="orderValue" class="num">Order value <span class="sort"></span></th>
+            <th data-sort="reason">Reason <span class="sort"></span></th>
+          </tr></thead>
+          <tbody id="replenishment-body"></tbody>
+        </table></div>
+      </article>
+    </section>
+
+    <section id="tab-decisions" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-decisions" hidden>
+      <article class="card">
+        <div class="card-head"><div><h2>Replenishment runs</h2><p class="muted small">Select a run to see its proposals</p></div></div>
+        <div class="table-wrap short"><table>
+          <thead><tr><th>Run</th><th>Status</th><th class="num">Proposals</th><th class="num">Value</th><th>Created</th><th></th></tr></thead>
+          <tbody id="runs-body"></tbody>
+        </table></div>
+      </article>
+      <article id="proposals-card" class="card" hidden>
+        <div class="card-head"><div><h2 id="proposals-title">Proposals</h2><p class="muted small" id="proposals-meta"></p></div><button id="proposals-close" class="button ghost" type="button">Close</button></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Product</th><th>Supplier</th><th class="num">Recommended</th><th class="num">Value</th><th>Status</th><th>Decision</th></tr></thead>
+          <tbody id="proposals-body"></tbody>
+        </table></div>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Purchase orders</h2><p class="muted small">Drafts and submitted orders from Postgres</p></div></div>
+        <div class="table-wrap short"><table>
+          <thead><tr><th>PO</th><th>Supplier</th><th>Status</th><th class="num">Total</th><th>Created</th></tr></thead>
+          <tbody id="purchase-body"></tbody>
+        </table></div>
+      </article>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <span>Read-only demo console. Writes are intentionally unavailable.</span>
+  <span><a href="/openapi/springtime-v1.json">OpenAPI</a> · <a href="/swagger-ui/index.html">Swagger</a> · <a href="/actuator/health/liveness">liveness</a></span>
+</footer>
+
+<dialog id="key-dialog" class="key-dialog" aria-labelledby="key-title">
+  <form method="dialog" id="key-form">
+    <div class="dialog-head">
+      <div class="mark small" aria-hidden="true">S</div>
+      <div><h2 id="key-title">Read-only API key</h2><p class="muted small">Stored in this tab's session storage only.</p></div>
+      <button class="icon-button" value="cancel" aria-label="Close" type="submit">×</button>
+    </div>
+    <p class="muted">Paste the <strong>read-only</strong> key. Never use the admin key here. The console calls only GET endpoints.</p>
+    <input id="key-input" type="password" autocomplete="off" spellcheck="false" placeholder="X-API-Key" aria-label="Read-only API key">
+    <p id="key-error" class="key-error" hidden></p>
+    <div class="dialog-actions">
+      <button id="key-clear" class="button ghost" type="button">Clear key</button>
+      <button class="button" value="save" type="submit">Connect</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>
