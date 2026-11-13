@@ -28,6 +28,7 @@
       <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3a7 7 0 0 1 6.7 5h-2.1A5 5 0 1 0 15 10h2a7 7 0 1 1-7-7v2.2A2.8 2.8 0 0 0 10 3Z" fill="currentColor"/><path d="M17 3v5h-5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
       Refresh
     </button>
+    <button id="guide-toggle" class="button ghost" type="button">Guide</button>
     <button id="key-toggle" class="button" type="button">API key</button>
   </div>
 </header>
@@ -96,6 +97,26 @@
     </nav>
 
     <section id="tab-overview" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-overview">
+      <article class="journey card">
+        <div class="journey-lead">
+          <h2>What this is</h2>
+          <p>A planner's work queue for one store. Follow the same three steps a planner uses.</p>
+        </div>
+        <div class="journey-steps">
+          <div class="journey-step">
+            <span class="step-number">1</span>
+            <div><h3>Find risk</h3><p>Which SKUs are below cover, and by how much.</p><button class="linkish" type="button" data-tab-jump="inventory">Open inventory →</button></div>
+          </div>
+          <div class="journey-step">
+            <span class="step-number">2</span>
+            <div><h3>Review the plan</h3><p>Ranked replenishment with units, value, and why.</p><button class="linkish" type="button" data-tab-jump="replenishment">Open replenishment →</button></div>
+          </div>
+          <div class="journey-step">
+            <span class="step-number">3</span>
+            <div><h3>Follow decisions</h3><p>What was approved, ordered, and handed to a supplier.</p><button class="linkish" type="button" data-tab-jump="decisions">Open decisions →</button></div>
+          </div>
+        </div>
+      </article>
       <div class="grid-2">
         <article class="card">
           <div class="card-head"><div><h2>Risk mix</h2><p class="muted small" id="risk-meta"></p></div></div>
@@ -205,11 +226,36 @@
       <button class="icon-button" value="cancel" aria-label="Close" type="submit">×</button>
     </div>
     <p class="muted">Paste the <strong>read-only</strong> key. Never use the admin key here. The console calls only GET endpoints.</p>
-    <input id="key-input" type="password" autocomplete="off" spellcheck="false" placeholder="X-API-Key" aria-label="Read-only API key">
+    <input id="key-input" type="password" autocomplete="off" spellcheck="false" placeholder="X-API-Key" aria-label="API key value">
     <p id="key-error" class="key-error" hidden></p>
     <div class="dialog-actions">
       <button id="key-clear" class="button ghost" type="button">Clear key</button>
       <button class="button" value="save" type="submit">Connect</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="guide-dialog" class="key-dialog guide-dialog" aria-labelledby="guide-title">
+  <form method="dialog">
+    <div class="dialog-head">
+      <div class="mark small" aria-hidden="true">S</div>
+      <div><h2 id="guide-title">What this demo does</h2><p class="muted small">60-second tour</p></div>
+      <button class="icon-button" value="close" aria-label="Close" type="submit">×</button>
+    </div>
+    <p>Springtime helps a store planner decide <strong>what to reorder, for which store, and why</strong>.
+    It combines inventory, demand, and supplier data into a ranked action list, then turns approved
+    recommendations into purchase orders and a supplier handoff.</p>
+    <ol class="guide-steps">
+      <li><strong>Pick a store.</strong> Start with <code>ST-001</code>; every view is scoped to that store.</li>
+      <li><strong>Overview.</strong> Risk mix and priority actions, lowest days of cover first.</li>
+      <li><strong>Inventory.</strong> Search or filter to Critical/Watch. Days cover = available units ÷ average daily sales.</li>
+      <li><strong>Replenishment.</strong> Recommended units, order value, and the reason (stockout, below lead time, below safety stock, or below reorder point).</li>
+      <li><strong>Decisions.</strong> Open a run to see proposals, their status, and the resulting purchase orders.</li>
+    </ol>
+    <p class="muted small">This console is read-only. Use Swagger for the full API and write flows.
+    Data is synthetic; it is a portfolio demo, not a production planning system.</p>
+    <div class="dialog-actions">
+      <button id="guide-start" class="button" type="button">Start with ST-001</button>
     </div>
   </form>
 </dialog>

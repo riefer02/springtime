@@ -298,3 +298,25 @@ footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wr
   .welcome .button { margin-left: 0; }
   footer { padding: 0 16px 24px; }
 }
+
+/* What this is / guide */
+.journey { display: grid; grid-template-columns: 230px 1fr; gap: 22px; align-items: start; background: linear-gradient(135deg, #ffffff 0%, #f5fbfa 100%); }
+.journey-lead h2 { margin: 0 0 6px; font-size: 16px; }
+.journey-lead p { margin: 0; color: var(--muted); font-size: 13px; }
+.journey-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.journey-step { display: flex; gap: 11px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.step-number { display: grid; place-items: center; flex: 0 0 auto; width: 25px; height: 25px; border-radius: 8px; background: var(--accent-soft); color: var(--accent-strong); font-size: 12px; font-weight: 800; }
+.journey-step h3 { margin: 0 0 2px; font-size: 13px; }
+.journey-step p { margin: 0 0 6px; color: var(--muted); font-size: 12px; }
+.linkish { border: 0; background: transparent; padding: 0; color: var(--accent); font: inherit; font-size: 12px; font-weight: 700; }
+.linkish:hover { text-decoration: underline; }
+
+.guide-dialog { width: min(640px, calc(100vw - 32px)); }
+.guide-steps { margin: 14px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 9px; }
+.guide-steps li { padding-left: 2px; }
+.guide-steps code { background: #f2f4f7; padding: 1px 5px; border-radius: 4px; }
+
+@media (max-width: 900px) {
+  .journey { grid-template-columns: 1fr; }
+  .journey-steps { grid-template-columns: 1fr; }
+}

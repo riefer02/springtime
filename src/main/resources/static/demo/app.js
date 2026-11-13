@@ -74,6 +74,9 @@
     proposalsMeta: $('proposals-meta'),
     proposalsBody: $('proposals-body'),
     proposalsClose: $('proposals-close'),
+    guideToggle: $('guide-toggle'),
+    guideDialog: $('guide-dialog'),
+    guideStart: $('guide-start'),
     keyDialog: $('key-dialog'),
     keyForm: $('key-form'),
     keyInput: $('key-input'),
@@ -141,6 +144,16 @@
   }
 
   function closeKeyDialog() { if (el.keyDialog.open) el.keyDialog.close(); }
+
+  function openGuide() {
+    if (!el.guideDialog.open) el.guideDialog.showModal();
+    writeStorage('springtime.guideSeen', '1');
+  }
+
+  function maybeShowGuide() {
+    if (readStorage('springtime.guideSeen') === '1') return;
+    if (!el.keyDialog.open) openGuide();
+  }
 
   function showDashboard(show) {
     el.dashboard.hidden = !show;
@@ -505,6 +518,7 @@
     }
     showDashboard(true);
     await refreshAll();
+    if (state.key && el.error.hidden) maybeShowGuide();
   }
 
   // Tabs
@@ -513,6 +527,26 @@
   });
 
   // Key dialog
+  el.guideToggle.addEventListener('click', openGuide);
+  el.guideStart.addEventListener('click', async () => {
+    el.guideDialog.close();
+    if (!state.stores.some((store) => store.storeId === 'ST-001')) return;
+    el.store.value = 'ST-001';
+    state.storeId = 'ST-001';
+    writeStorage(STORE_STORAGE, state.storeId);
+    state.store = state.stores.find((store) => store.storeId === state.storeId);
+    renderStoreMeta();
+    state.runSequence++;
+    state.proposals = [];
+    state.selectedRun = null;
+    el.proposalsCard.hidden = true;
+    resetData();
+    await loadStoreData();
+  });
+  document.querySelectorAll('[data-tab-jump]').forEach((button) => {
+    button.addEventListener('click', () => setTab(button.dataset.tabJump));
+  });
+
   el.keyToggle.addEventListener('click', () => openKeyDialog());
   el.welcomeKey.addEventListener('click', () => openKeyDialog());
   el.keyForm.addEventListener('submit', async (event) => {
@@ -631,7 +665,7 @@
   });
 
   document.addEventListener('keydown', (event) => {
-    if (el.keyDialog.open) return;
+    if (el.keyDialog.open || el.guideDialog.open) return;
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     const target = event.target;
     const typing = target instanceof HTMLInputElement || target instanceof HTMLSelectElement
@@ -645,6 +679,10 @@
     if (event.key.toLowerCase() === 'r' && !el.refresh.disabled) {
       event.preventDefault();
       refreshAll();
+    }
+    if (event.key === '?') {
+      event.preventDefault();
+      openGuide();
     }
   });
 

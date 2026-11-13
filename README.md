@@ -8,6 +8,18 @@ It uses **Postgres for the control plane** (purchase orders, lifecycle events, s
 Postgres access is explicit SQL through `JdbcClient`, with Flyway migrations. BigQuery is reached
 through typed gateway ports.
 
+## What it does
+
+Springtime is a demo of a store replenishment workflow:
+
+1. A planner picks a store and sees which SKUs are below cover.
+2. The service ranks what to reorder using demand, lead time, safety stock, and case packs.
+3. Approved recommendations become purchase orders and a supplier outbox entry.
+
+The dashboard is a read-only window into that flow; Swagger is the full API. Data is synthetic.
+The architecture and operations around it are real, but this is a portfolio demo, not a production
+planning system.
+
 For a guided review, start with [docs/showcase.md](docs/showcase.md): a read-only tour, the
 operator walkthrough, the Swagger UI hand-off, and what a reviewer's agent can exercise.
 

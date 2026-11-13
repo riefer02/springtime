@@ -1,5 +1,8 @@
 # Showcase walkthrough
 
+This demo answers one question a store planner has every morning: **what should I reorder at this
+store, why, and what did we decide?**
+
 A short, honest tour for a reviewer (human or agent). It assumes a running deployment with the
 deterministic seed loaded. The built-in UI is **Swagger UI** at `/swagger-ui/index.html`; the API
 contract is `/openapi/springtime-v1.json` (authenticated). This guide is the map.

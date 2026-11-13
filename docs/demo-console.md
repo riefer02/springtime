@@ -11,8 +11,10 @@ the API.
 - **Replenishment:** searchable recommendations, order values, and the filtered total.
 - **Decisions:** durable runs, proposal drill-down with decision status, and purchase orders.
 
-Search, filtering, and sorting are client-side, so they are instant and do not re-query BigQuery.
-`/` focuses the active search and `r` refreshes.
+The Overview starts with a three-step journey (find risk → review the plan → follow decisions) and a
+Guide dialog explaining the flow in plain language. Search, filtering, and sorting are client-side,
+so they are instant and do not re-query BigQuery. `/` focuses the active search, `r` refreshes, and
+`?` opens the guide.
 
 ## Use
 
