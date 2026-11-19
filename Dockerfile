@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 # ---- build ----------------------------------------------------------------
-FROM maven:3.9.16-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /workspace
 
 # Warm the Maven cache separately from the sources so code edits do not re-download the world.
